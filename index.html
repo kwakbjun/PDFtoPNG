@@ -93,7 +93,7 @@
 </head>
 <body class="min-h-screen selection:bg-black selection:text-white">
 
-    <div class="max-w-4xl mx-auto px-8 py-20">
+    <div class="max-w-6xl mx-auto px-8 py-20">
         <!-- Header -->
         <header class="text-center mb-24">
             <span class="text-[10px] tracking-[0.3em] font-semibold text-gray-400 uppercase mb-4 block">Professional Utility</span>
@@ -107,7 +107,7 @@
         <!-- Main Workspace -->
         <main class="space-y-16">
             <!-- Upload Section -->
-            <div class="luxury-card rounded-2xl p-10">
+            <div class="luxury-card rounded-2xl p-10 max-w-4xl mx-auto">
                 <div id="drop-zone" class="drop-zone-area relative rounded-xl p-16 text-center cursor-pointer group">
                     <input type="file" id="file-input" accept="application/pdf" class="hidden">
                     
@@ -166,14 +166,15 @@
                     <h2 class="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase">변환된 페이지</h2>
                     <span id="page-count-badge" class="text-xs font-medium text-gray-800"></span>
                 </div>
-                <div id="preview-container" class="grid grid-cols-1 sm:grid-cols-2 gap-12">
+                <!-- Grid changed from 2 columns to responsive 2/3/4/5 columns -->
+                <div id="preview-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     <!-- Preview cards -->
                 </div>
             </div>
         </main>
 
         <footer class="mt-32 text-center">
-            <p class="text-[10px] text-gray-300 tracking-[0.3em] font-medium uppercase">All rights reserved &copy; Document Studio</p>
+            <p class="text-[10px] text-gray-300 tracking-[0.3em] font-medium uppercase">All rights reserved &copy; ByungJun, Kwak</p>
         </footer>
     </div>
 
@@ -300,10 +301,10 @@
                     await page.render({ canvasContext: context, viewport: viewport }).promise;
 
                     const wrapper = document.createElement('div');
-                    wrapper.className = 'preview-item flex flex-col items-center group';
+                    wrapper.className = 'preview-item flex flex-col items-center group w-full';
                     
                     const imgContainer = document.createElement('div');
-                    imgContainer.className = 'luxury-card rounded-lg overflow-hidden mb-6 bg-white w-full aspect-[3/4] flex items-center justify-center p-4';
+                    imgContainer.className = 'luxury-card rounded-lg overflow-hidden mb-4 bg-white w-full aspect-[3/4] flex items-center justify-center p-2';
                     
                     const img = document.createElement('img');
                     img.src = canvas.toDataURL('image/png');
