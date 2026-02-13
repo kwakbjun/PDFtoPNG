@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to PNG Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- JSZip for bundling images -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver for downloading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        .drop-zone--over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        #preview-container canvas {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            max-width: 100%;
+            height: auto;
+        }
+        .loader {
+            border-top-color: #3b82f6;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-900">
+
+    <div class="max-w-5xl mx-auto px-4 py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">PDF to PNG Converter</h1>
+            <p class="text-lg text-gray-600">PDF 파일을 각 페이지별 고화질 PNG 이미지로 간편하게 변환하세요.</p>
+        </header>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <!-- Drop Zone -->
+            <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center transition-all cursor-pointer hover:border-blue-400 group">
+                <input type="file" id="file-input" accept="application/pdf" class="hidden">
+                <div class="flex flex-col items-center">
+                    <svg class="w-16 h-16 text-gray-400 group-hover:text-blue-500 mb-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-xl font-medium text-gray-700">PDF 파일을 여기로 드래그하거나 클릭하여 선택하세요</p>
+                    <p class="text-sm text-gray-500 mt-2">최대 100MB 지원</p>
+                </div>
+            </div>
+
+            <!-- Settings & Progress -->
+            <div id="action-area" class="hidden mt-8 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-4">
+                        <label for="scale-select" class="font-medium">이미지 품질:</label>
+                        <select id="scale-select" class="bg-white border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="1">기본 (72 DPI)</option>
+                            <option value="1.5">선명하게 (1.5x)</option>
+                            <option value="2" selected>고화질 (2x)</option>
+                            <option value="3">매우 고화질 (3x)</option>
+                        </select>
+                    </div>
+                    <div id="file-info" class="text-sm font-medium text-blue-600"></div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="progress-container" class="hidden">
+                    <div class="flex justify-between mb-1">
+                        <span id="progress-text" class="text-sm font-medium text-blue-700">변환 중... (0/0)</span>
+                        <span id="progress-percent" class="text-sm font-medium text-blue-700">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button id="convert-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-95">
+                        PNG로 변환하기
+                    </button>
+                    <button id="download-zip-btn" class="hidden bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all active:scale-95">
+                        ZIP 파일로 모두 저장
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Grid -->
+        <div id="preview-section" class="hidden">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                변환 결과 미리보기
+                <span id="page-count-badge" class="bg-gray-200 text-gray-700 text-xs font-bold px-2 py-1 rounded-full"></span>
+            </h2>
+            <div id="preview-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Canvases will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Error/Notice Modal Replacement -->
+    <div id="toast" class="fixed bottom-8 right-8 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        메시지 내용
+    </div>
+
+    <script>
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const actionArea = document.getElementById('action-area');
+        const convertBtn = document.getElementById('convert-btn');
+        const downloadZipBtn = document.getElementById('download-zip-btn');
+        const previewSection = document.getElementById('preview-section');
+        const previewContainer = document.getElementById('preview-container');
+        const fileInfoDisplay = document.getElementById('file-info');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const progressPercent = document.getElementById('progress-percent');
+        const pageCountBadge = document.getElementById('page-count-badge');
+        const scaleSelect = document.getElementById('scale-select');
+
+        let currentPdf = null;
+        let pdfFileName = "";
+        let convertedImages = [];
+
+        // UI Helpers
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'bg-gray-800', 'bg-red-600');
+            toast.classList.add(isError ? 'bg-red-600' : 'bg-gray-800');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Drop Zone Handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drop-zone--over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drop-zone--over'), false);
+        });
+
+        dropZone.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length) handleFile(files[0]);
+        });
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        async function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                showToast('PDF 파일만 업로드 가능합니다.', true);
+                return;
+            }
+
+            pdfFileName = file.name.replace(/\.[^/.]+$/, "");
+            fileInfoDisplay.textContent = `선택된 파일: ${file.name}`;
+            actionArea.classList.remove('hidden');
+            previewSection.classList.add('hidden');
+            downloadZipBtn.classList.add('hidden');
+            convertBtn.classList.remove('hidden');
+            previewContainer.innerHTML = '';
+            convertedImages = [];
+
+            const reader = new FileReader();
+            reader.onload = async function() {
+                try {
+                    const typedarray = new Uint8Array(this.result);
+                    currentPdf = await pdfjsLib.getDocument(typedarray).promise;
+                    showToast(`${currentPdf.numPages}페이지의 PDF를 불러왔습니다.`);
+                } catch (error) {
+                    showToast('PDF 파일을 읽는 중 오류가 발생했습니다.', true);
+                    console.error(error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (!currentPdf) return;
+
+            const totalPages = currentPdf.numPages;
+            const scale = parseFloat(scaleSelect.value);
+            
+            convertBtn.disabled = true;
+            convertBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            progressContainer.classList.remove('hidden');
+            previewSection.classList.remove('hidden');
+            previewContainer.innerHTML = '';
+            convertedImages = [];
+            pageCountBadge.textContent = `${totalPages} Pages`;
+
+            for (let i = 1; i <= totalPages; i++) {
+                // Update Progress
+                const percent = Math.round((i / totalPages) * 100);
+                progressBar.style.width = `${percent}%`;
+                progressText.textContent = `변환 중... (${i}/${totalPages})`;
+                progressPercent.textContent = `${percent}%`;
+
+                try {
+                    const page = await currentPdf.getPage(i);
+                    const viewport = page.getViewport({ scale });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+
+                    await page.render(renderContext).promise;
+
+                    // Create Wrapper for preview
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'flex flex-col gap-2 p-2 bg-white rounded shadow border border-gray-100 animate-pulse';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'text-xs font-bold text-gray-500 uppercase';
+                    label.textContent = `Page ${i}`;
+                    
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(canvas);
+                    previewContainer.appendChild(wrapper);
+                    wrapper.classList.remove('animate-pulse');
+
+                    // Store blob for ZIP
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    convertedImages.push({
+                        blob: blob,
+                        name: `${pdfFileName}_page_${i}.png`
+                    });
+
+                } catch (err) {
+                    console.error(`Error rendering page ${i}:`, err);
+                }
+            }
+
+            convertBtn.classList.add('hidden');
+            convertBtn.disabled = false;
+            convertBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            downloadZipBtn.classList.remove('hidden');
+            progressText.textContent = '변환 완료!';
+            showToast('모든 페이지가 변환되었습니다.');
+        });
+
+        downloadZipBtn.addEventListener('click', async () => {
+            if (convertedImages.length === 0) return;
+
+            const zip = new JSZip();
+            convertedImages.forEach(img => {
+                zip.file(img.name, img.blob);
+            });
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, `${pdfFileName}_images.zip`);
+            showToast('ZIP 파일 다운로드를 시작합니다.');
+        });
+    </script>
+</body>
+</html>
