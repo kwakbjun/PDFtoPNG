@@ -3,204 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Voyager - Futuristic Converter</title>
-    <!-- Tailwind CSS for styling -->
+    <title>PDF to PNG - Minimal Luxury Edition</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PDF.js library for PDF processing -->
+    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- JSZip for bundling images into a ZIP file -->
+    <!-- JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- FileSaver for downloading files -->
+    <!-- FileSaver -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
 
         body {
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b, #0f172a, #020617);
-            color: #f8fafc;
-            overflow-x: hidden;
+            background-color: #fcfcfc;
+            color: #1a1a1a;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Glassmorphism panel effect */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        h1 {
+            font-family: 'Playfair Display', serif;
         }
 
-        /* Neon border glow effect */
-        .neon-border {
-            position: relative;
+        .luxury-card {
+            background: #ffffff;
+            border: 1px solid #eaeaea;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
-        .neon-border::after {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899);
-            z-index: -1;
-            border-radius: inherit;
-            opacity: 0.3;
-            filter: blur(5px);
+        .drop-zone-area {
+            border: 1px solid #e5e7eb;
+            background-color: #fafafa;
+            transition: all 0.3s ease;
         }
 
-        .drop-zone-active {
-            border-color: #3b82f6 !important;
-            background: rgba(59, 130, 246, 0.05) !important;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        .drop-zone-area.active {
+            border-color: #1a1a1a;
+            background-color: #f3f4f6;
         }
 
-        .neon-btn {
-            background: linear-gradient(45deg, #2563eb, #7c3aed);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        .btn-primary {
+            background-color: #1a1a1a;
+            color: white;
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
         }
 
-        .neon-btn:hover {
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
-            transform: translateY(-2px);
+        .btn-primary:hover {
+            background-color: #333333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        .progress-glow {
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        .btn-secondary {
+            border: 1px solid #1a1a1a;
+            color: #1a1a1a;
+            transition: all 0.3s ease;
         }
 
-        /* Scanner animation effect for drop zone */
-        @keyframes scan {
-            0% { transform: translateY(-100%); opacity: 0; }
-            50% { opacity: 0.5; }
-            100% { transform: translateY(100%); opacity: 0; }
+        .btn-secondary:hover {
+            background-color: #f9f9f9;
         }
 
-        .scanner-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-            animation: scan 3s linear infinite;
+        /* Custom Progress Bar */
+        .progress-fill {
+            height: 100%;
+            background-color: #1a1a1a;
+            transition: width 0.4s ease-out;
         }
 
-        /* Custom Scrollbar for modern look */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+        /* Preview Image Animation */
+        .preview-item {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Selection */
+        ::selection {
+            background: #1a1a1a;
+            color: white;
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen selection:bg-black selection:text-white">
 
-    <!-- Background Decorative Orbs -->
-    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-
-    <div class="relative z-10 max-w-5xl mx-auto px-6 py-16">
-        <header class="text-center mb-16">
-            <h1 class="text-5xl md:text-6xl font-black tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 uppercase">
-                PDF Voyager
-            </h1>
-            <p class="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
-                차세대 렌더링 엔진으로 PDF 문서를 고화질 이미지로 워프하세요. <br>
-                <span class="text-blue-400 font-mono tracking-widest text-sm">[ SECURE . LOCAL . FAST ]</span>
+    <div class="max-w-4xl mx-auto px-8 py-20">
+        <!-- Header -->
+        <header class="text-center mb-24">
+            <span class="text-[10px] tracking-[0.3em] font-semibold text-gray-400 uppercase mb-4 block">Professional Utility</span>
+            <h1 class="text-5xl md:text-6xl text-gray-900 mb-6 italic">Document Studio</h1>
+            <p class="text-gray-500 font-light text-lg tracking-tight">
+                PDF 문서를 정교한 고화질 이미지로 변환합니다.<br>
+                <span class="text-xs text-gray-300 mt-4 block">PRIVATE & SECURE LOCAL PROCESSING</span>
             </p>
         </header>
 
         <!-- Main Workspace -->
-        <main class="space-y-12">
-            <!-- Drop & Config Area -->
-            <div class="glass-panel rounded-3xl p-8 neon-border">
-                <div id="drop-zone" class="relative overflow-hidden border-2 border-dashed border-slate-700 rounded-2xl p-16 text-center transition-all cursor-pointer group hover:border-slate-500">
-                    <div class="scanner-line"></div>
+        <main class="space-y-16">
+            <!-- Upload Section -->
+            <div class="luxury-card rounded-2xl p-10">
+                <div id="drop-zone" class="drop-zone-area relative rounded-xl p-16 text-center cursor-pointer group">
                     <input type="file" id="file-input" accept="application/pdf" class="hidden">
                     
-                    <div class="relative z-10 flex flex-col items-center">
-                        <div class="w-20 h-20 mb-6 rounded-2xl bg-slate-900 flex items-center justify-center border border-slate-700 group-hover:border-blue-500 transition-colors">
-                            <svg class="w-10 h-10 text-slate-400 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">PDF 문서를 드롭하세요</h3>
-                        <p class="text-slate-500 font-mono text-sm uppercase">READY TO PROCESS .PDF DATA</p>
+                    <div class="flex flex-col items-center">
+                        <svg class="w-12 h-12 text-gray-300 group-hover:text-gray-900 transition-colors mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-800 mb-1">문서를 여기에 놓아주세요</h3>
+                        <p class="text-xs text-gray-400 font-light tracking-wide">CLICK TO BROWSE OR DRAG PDF</p>
                     </div>
                 </div>
 
-                <!-- Controls Area (Visible after file selection) -->
-                <div id="action-area" class="hidden mt-8 space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
-                        <div class="flex items-center gap-4">
-                            <div class="p-3 bg-blue-500/10 rounded-lg">
-                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                            </div>
-                            <div class="flex-1">
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">렌더링 품질</label>
-                                <select id="scale-select" class="w-full bg-slate-800 border-none text-white rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="1">Standard (Low)</option>
-                                    <option value="2" selected>Ultra HD (2x)</option>
-                                    <option value="3">Maximum (3x)</option>
-                                </select>
-                            </div>
+                <!-- Config & Progress -->
+                <div id="action-area" class="hidden mt-12 space-y-10">
+                    <div class="flex flex-col md:flex-row gap-8 items-end justify-between border-t border-gray-100 pt-10">
+                        <div class="w-full md:w-1/2">
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-3 tracking-widest">Image Fidelity</label>
+                            <select id="scale-select" class="w-full bg-white border-b border-gray-200 text-gray-800 py-2 outline-none focus:border-black transition-colors text-sm">
+                                <option value="1">Standard (72 DPI)</option>
+                                <option value="2" selected>High Definition (144 DPI)</option>
+                                <option value="3">Ultra Fine (216 DPI)</option>
+                            </select>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <div class="p-3 bg-purple-500/10 rounded-lg">
-                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <div class="flex-1 text-sm overflow-hidden">
-                                <p class="text-slate-500 uppercase font-bold text-xs mb-1">Target Data</p>
-                                <p id="file-info" class="text-blue-400 truncate font-mono">waiting...</p>
-                            </div>
+                        <div class="w-full md:w-1/2 text-right">
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-2 tracking-widest">Selected File</p>
+                            <p id="file-info" class="text-sm text-gray-800 font-medium truncate italic"></p>
                         </div>
                     </div>
 
-                    <!-- Progress Bar -->
-                    <div id="progress-container" class="hidden space-y-2">
-                        <div class="flex justify-between text-xs font-mono">
-                            <span id="progress-text" class="text-blue-400">SYNCING DATA...</span>
-                            <span id="progress-percent" class="text-slate-400">0%</span>
+                    <!-- Progress -->
+                    <div id="progress-container" class="hidden space-y-3">
+                        <div class="flex justify-between items-end">
+                            <span id="progress-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Processing...</span>
+                            <span id="progress-percent" class="text-sm font-medium text-gray-900">0%</span>
                         </div>
-                        <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                            <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 progress-glow transition-all duration-300" style="width: 0%"></div>
+                        <div class="h-[1px] w-full bg-gray-100">
+                            <div id="progress-bar" class="progress-fill" style="width: 0%"></div>
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <button id="convert-btn" class="neon-btn text-white font-bold py-4 px-12 rounded-xl flex items-center justify-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            변환 시작 (START)
+                    <!-- Actions -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                        <button id="convert-btn" class="btn-primary text-xs font-bold py-5 px-14 rounded-full uppercase">
+                            변환 시작하기
                         </button>
-                        <button id="download-zip-btn" class="hidden bg-slate-100 hover:bg-white text-slate-900 font-bold py-4 px-12 rounded-xl transition-all flex items-center justify-center gap-3">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            ZIP으로 저장
+                        <button id="download-zip-btn" class="hidden btn-secondary text-xs font-bold py-5 px-14 rounded-full uppercase">
+                            이미지 일괄 저장
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Preview Grid Section -->
-            <div id="preview-section" class="hidden space-y-8">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-2xl font-bold tracking-tight uppercase">출력 미리보기 (Preview)</h2>
-                    <span id="page-count-badge" class="px-3 py-1 bg-slate-800 rounded-full text-xs font-mono text-blue-400 border border-slate-700"></span>
+            <!-- Preview Grid -->
+            <div id="preview-section" class="hidden space-y-12">
+                <div class="flex items-center justify-between border-b border-gray-100 pb-6">
+                    <h2 class="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase">변환된 페이지</h2>
+                    <span id="page-count-badge" class="text-xs font-medium text-gray-800"></span>
                 </div>
-                <div id="preview-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Preview cards will be injected here -->
+                <div id="preview-container" class="grid grid-cols-1 sm:grid-cols-2 gap-12">
+                    <!-- Preview cards -->
                 </div>
             </div>
         </main>
+
+        <footer class="mt-32 text-center">
+            <p class="text-[10px] text-gray-300 tracking-[0.3em] font-medium uppercase">All rights reserved &copy; Document Studio</p>
+        </footer>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 glass-panel border border-white/20 px-8 py-4 rounded-2xl shadow-2xl translate-y-24 opacity-0 transition-all duration-500 z-50 text-sm font-medium">
-        Message Content
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-3 rounded-full text-[11px] font-bold tracking-widest uppercase shadow-2xl translate-y-20 opacity-0 transition-all duration-500 z-50">
+        Message
     </div>
 
     <script>
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        // Set worker for background processing
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // UI Elements
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const actionArea = document.getElementById('action-area');
@@ -220,31 +205,29 @@
         let pdfFileName = "";
         let convertedImages = [];
 
-        // Helper to show custom notifications
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
-            toast.style.borderColor = isError ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.2)';
-            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.style.backgroundColor = isError ? '#ef4444' : '#1a1a1a';
+            toast.classList.remove('translate-y-20', 'opacity-0');
             toast.classList.add('translate-y-0', 'opacity-100');
             setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-24', 'opacity-0');
+                toast.classList.add('translate-y-20', 'opacity-0');
             }, 3000);
         }
 
-        // Drag and Drop Logic
         ['dragenter', 'dragover'].forEach(name => {
             dropZone.addEventListener(name, (e) => {
                 e.preventDefault();
-                dropZone.classList.add('drop-zone-active');
+                dropZone.classList.add('active');
             });
         });
 
         ['dragleave', 'drop'].forEach(name => {
             dropZone.addEventListener(name, (e) => {
                 e.preventDefault();
-                dropZone.classList.remove('drop-zone-active');
+                dropZone.classList.remove('active');
             });
         });
 
@@ -260,7 +243,7 @@
 
         async function handleFile(file) {
             if (file.type !== 'application/pdf') {
-                showToast('지원되지 않는 형식입니다. PDF만 가능합니다.', true);
+                showToast('지원되지 않는 파일 형식입니다.', true);
                 return;
             }
 
@@ -277,15 +260,14 @@
                 try {
                     const typedarray = new Uint8Array(this.result);
                     currentPdf = await pdfjsLib.getDocument(typedarray).promise;
-                    showToast(`${currentPdf.numPages}페이지 문서를 로드했습니다.`);
+                    showToast(`${currentPdf.numPages}페이지 문서를 불러왔습니다.`);
                 } catch (error) {
-                    showToast('문서를 분석하는 중 오류가 발생했습니다.', true);
+                    showToast('문서 로드 중 오류가 발생했습니다.', true);
                 }
             };
             reader.readAsArrayBuffer(file);
         }
 
-        // Conversion Logic
         convertBtn.addEventListener('click', async () => {
             if (!currentPdf) return;
 
@@ -293,17 +275,17 @@
             const scale = parseFloat(scaleSelect.value);
             
             convertBtn.disabled = true;
-            convertBtn.classList.add('opacity-30', 'cursor-not-allowed');
+            convertBtn.classList.add('opacity-30');
             progressContainer.classList.remove('hidden');
             previewSection.classList.remove('hidden');
             previewContainer.innerHTML = '';
             convertedImages = [];
-            pageCountBadge.textContent = `${totalPages} PAGES`;
+            pageCountBadge.textContent = `${totalPages} Pages`;
 
             for (let i = 1; i <= totalPages; i++) {
                 const percent = Math.round((i / totalPages) * 100);
                 progressBar.style.width = `${percent}%`;
-                progressText.textContent = `렌더링 진행 중: ${i}/${totalPages}`;
+                progressText.textContent = `Rendering... (${i}/${totalPages})`;
                 progressPercent.textContent = `${percent}%`;
 
                 try {
@@ -315,53 +297,49 @@
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
 
-                    // Render PDF page to canvas
                     await page.render({ canvasContext: context, viewport: viewport }).promise;
 
-                    // Create UI card for preview
                     const wrapper = document.createElement('div');
-                    wrapper.className = 'glass-panel rounded-2xl p-4 border border-slate-800 transition-all hover:border-blue-500 group animate-in zoom-in duration-300';
+                    wrapper.className = 'preview-item flex flex-col items-center group';
                     
                     const imgContainer = document.createElement('div');
-                    imgContainer.className = 'rounded-lg overflow-hidden mb-4 bg-slate-950 aspect-[3/4] flex items-center justify-center';
+                    imgContainer.className = 'luxury-card rounded-lg overflow-hidden mb-6 bg-white w-full aspect-[3/4] flex items-center justify-center p-4';
                     
                     const img = document.createElement('img');
                     img.src = canvas.toDataURL('image/png');
-                    img.className = 'max-w-full max-h-full object-contain transform transition-transform group-hover:scale-105';
+                    img.className = 'max-w-full max-h-full object-contain shadow-sm';
                     
                     const label = document.createElement('div');
-                    label.className = 'flex justify-between items-center text-[10px] font-black font-mono text-slate-500 uppercase tracking-tighter';
-                    label.innerHTML = `<span>PAGE_${i.toString().padStart(3,'0')}</span><span class="text-blue-500">READY</span>`;
+                    label.className = 'text-[10px] font-bold text-gray-300 uppercase tracking-widest';
+                    label.textContent = `Page ${i.toString().padStart(2, '0')}`;
                     
                     imgContainer.appendChild(img);
                     wrapper.appendChild(imgContainer);
                     wrapper.appendChild(label);
                     previewContainer.appendChild(wrapper);
 
-                    // Convert to Blob for ZIP inclusion
                     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-                    convertedImages.push({ blob, name: `${pdfFileName}_page_${i}.png` });
+                    convertedImages.push({ blob, name: `${pdfFileName}_${i}.png` });
 
                 } catch (err) {
-                    console.error(`Page ${i} render failed:`, err);
+                    console.error(err);
                 }
             }
 
             convertBtn.classList.add('hidden');
             convertBtn.disabled = false;
-            convertBtn.classList.remove('opacity-30', 'cursor-not-allowed');
+            convertBtn.classList.remove('opacity-30');
             downloadZipBtn.classList.remove('hidden');
-            progressText.textContent = 'CONVERSION COMPLETE';
-            showToast('변환이 완료되었습니다. ZIP 파일을 다운로드할 수 있습니다.');
+            progressText.textContent = 'Mission Complete';
+            showToast('모든 페이지가 변환되었습니다.');
         });
 
-        // Download ZIP Logic
         downloadZipBtn.addEventListener('click', async () => {
             if (convertedImages.length === 0) return;
             const zip = new JSZip();
             convertedImages.forEach(img => zip.file(img.name, img.blob));
             const content = await zip.generateAsync({ type: 'blob' });
-            saveAs(content, `${pdfFileName}_image_pack.zip`);
+            saveAs(content, `${pdfFileName}_package.zip`);
             showToast('파일 저장을 시작합니다.');
         });
     </script>
